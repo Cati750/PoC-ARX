@@ -7,16 +7,16 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="libarx-3.9.1 (1)" level="project" />
+    <orderEntry type="library" name="json" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Desktop/mysql-connector-j-9.3.0/mysql-connector-j-9.3.0.jar!/" />
+          <root url="jar://$USER_HOME$/Desktop/POC_ARX/LIBRARIES/mysql-connector-j-9.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="libarx-3.9.1 (1)" level="project" />
-    <orderEntry type="library" name="json" level="project" />
   </component>
 </module>

@@ -15,7 +15,53 @@ public class ARXUtils {
         return DriverManager.getConnection(url, user, pass);
     }
 
-    public static Data.DefaultData loadAndPseudonymizePatients(
+    public static Data.DefaultData loadAndMaybePseudonymizeTable(
+            Connection conn,
+            String tableName,
+            DatabaseMetadataUtils.TableKeys keys,
+            Map<String, Pseudonymizer> pseudonymizers,
+            List<String> columnsToTrackForHierarchies
+    ) throws SQLException {
+
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM " + tableName);
+        ResultSet rs = stmt.executeQuery();
+        ResultSetMetaData meta = rs.getMetaData();
+
+        int columnCount = meta.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = meta.getColumnName(i + 1);
+        }
+
+        Data.DefaultData data = Data.create();
+        data.add(columnNames);
+
+        while (rs.next()) {
+            String[] row = new String[columnCount];
+            for (int i = 0; i < columnCount; i++) {
+                String colName = columnNames[i];
+                String originalValue = rs.getString(colName);
+
+                if ((keys.primaryKeys.contains(colName) || keys.foreignKeys.containsKey(colName))
+                        && pseudonymizers.containsKey(colName)) {
+                    row[i] = pseudonymizers.get(colName).get(originalValue);
+                } else {
+                    row[i] = originalValue;
+
+                    if (columnsToTrackForHierarchies != null && columnsToTrackForHierarchies.contains(colName)) {
+                        // Podes recolher os valores únicos externamente se necessário para hierarquias personalizadas
+                    }
+                }
+            }
+            data.add(row);
+        }
+
+        return data;
+    }
+
+
+
+    /*public static Data.DefaultData loadAndPseudonymizePatients(
             Connection conn,
             Pseudonymizer patientIdMap,
             List<String> bloodtypeList,
@@ -99,10 +145,10 @@ public class ARXUtils {
         }
 
         return hospitalData;
-    }
+    }*/
 
 
-    public static Data.DefaultData loadAndPseudonymizeDiagnosis(
+    /*public static Data.DefaultData loadAndPseudonymizeDiagnosis(
             Connection conn,
             Pseudonymizer pacientIdMap,
             Pseudonymizer doctorIdMap
@@ -140,7 +186,7 @@ public class ARXUtils {
         }
 
         return diagnosisData;
-    }
+    }*/
 
     public static void aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception{
         Map<String, AttributeType> classificacao = PresidioPIIClassifier.classificarTabela(nomeTabela);
