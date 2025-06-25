@@ -62,4 +62,24 @@ public class DatabaseMetadataUtils {
             return "PKs: " + primaryKeys + ", FKs: " + foreignKeys;
         }
     }
+
+    public static Map<String, Set<String>> getColumnOccurrences(Connection conn) throws SQLException {
+        Map<String, Set<String>> colunaParaTabelas = new HashMap<>();
+        String query = "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, conn.getCatalog());
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String tabela = rs.getString("TABLE_NAME").toLowerCase();
+                String coluna = rs.getString("COLUMN_NAME").toLowerCase();
+
+                colunaParaTabelas.computeIfAbsent(coluna, k -> new HashSet<>()).add(tabela);
+            }
+        }
+
+        return colunaParaTabelas;
+    }
+
 }

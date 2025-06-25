@@ -16,6 +16,9 @@ public class Main {
     public static void main(String[] args) {
         try {
             Connection conn = ARXUtils.connectToDatabase("jdbc:mysql://127.0.0.1:3306/poc_arx", "root", "");
+
+            Map<String, Set<String>> colunaParaTabelas = DatabaseMetadataUtils.getColumnOccurrences(conn);
+
             //inicializa o mapeamento para que as pk pseudoanonimizadas sejam transpostas para as fk na tabela de diagnóstico
             Map<String, Pseudonymizer> pseudonymizerGlobal = new HashMap<>();
             Map<String, DatabaseMetadataUtils.TableKeys> metadata = DatabaseMetadataUtils.getDatabaseKeys(conn);
@@ -31,6 +34,16 @@ public class Main {
                 Set<String> colunasParaPseudonimizar = new HashSet<>(keys.primaryKeys);
                 if (tabela.equalsIgnoreCase("diagnosis")) colunasParaPseudonimizar.remove("diagnosis");
                 colunasParaPseudonimizar.addAll(keys.foreignKeys.keySet());
+
+                // verifica FKs implícitas (colunas partilhadas entre várias tabelas)
+                for (Map.Entry<String, Set<String>> entryColuna : colunaParaTabelas.entrySet()) {
+                    String coluna = entryColuna.getKey();
+                    Set<String> tabelas = entryColuna.getValue();
+
+                    if (tabelas.contains(tabela) && tabelas.size() > 1) {
+                        colunasParaPseudonimizar.add(coluna);
+                    }
+                }
 
                 Map<String, Pseudonymizer> mapa = new HashMap<>();
                 for (String coluna : colunasParaPseudonimizar) {
