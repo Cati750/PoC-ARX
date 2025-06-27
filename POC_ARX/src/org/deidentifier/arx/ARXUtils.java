@@ -48,8 +48,7 @@ public class ARXUtils {
                 } else {
                     row[i] = originalValue;
 
-                    if (columnsToTrackForHierarchies != null && columnsToTrackForHierarchies.contains(colName)) {
-                        // Podes recolher os valores únicos externamente se necessário para hierarquias personalizadas
+                    if (columnsToTrackForHierarchies != null && columnsToTrackForHierarchies.contains(colName)) 
                     }
                 }
             }
