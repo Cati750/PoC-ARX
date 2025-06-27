@@ -1,0 +1,71 @@
+diagnosis,patient_NIF,medical_condition,date_of_admission,cedula_medica,hospital_id,insurance_provider_id,billing_amount
+1,K3siUZSV,Migraine,*,smBTvHQ9,3,5,38121.91
+2,RRWcsDhf,Hypertension,*,uduix7az,5,5,10025.66
+3,rinx8KOU,Covid-19,*,S1XgFSUc,5,5,45932.83
+4,aesb6xXL,Covid-19,*,q4s7PA3N,1,1,46462.02
+5,Se78nnyt,Cancer,*,S1XgFSUc,1,2,43912.68
+6,BqPAMeTq,Hypertension,*,smBTvHQ9,4,1,48901.43
+7,kckEbmxq,Asthma,*,S1XgFSUc,4,5,8339.84
+8,hb7xUJlH,Fracture,*,S1XgFSUc,5,2,35676.15
+9,P6Naog4B,Fracture,2024-10-26,uduix7az,4,5,22629.16
+10,0y91ayGy,Heart Disease,*,S1XgFSUc,1,3,1149.61
+11,1zJPX75o,Heart Disease,*,DRH9Ziht,2,1,3642.55
+12,ibW3n60l,Diabetes,*,S1XgFSUc,1,1,42995.81
+13,zCSFuebG,Hypertension,*,DRH9Ziht,2,3,33481.99
+14,nXIzcsTW,Heart Disease,2023-10-22,DRH9Ziht,2,5,28852.96
+15,BMTbj1xa,Heart Disease,2024-01-02,q4s7PA3N,4,2,4806.86
+16,k7dKI5Ux,Fracture,*,uduix7az,4,4,23404.53
+17,8LO0LEo3,Diabetes,*,smBTvHQ9,1,4,36437.86
+18,6ZIwIKf0,Hypertension,*,S1XgFSUc,2,2,26860.66
+19,7PB0Cffg,Asthma,*,q4s7PA3N,2,3,23185.14
+20,zDQeKzrZ,Hypertension,*,q4s7PA3N,5,1,2624.36
+21,3FHNcpqK,Diabetes,*,smBTvHQ9,2,2,20380.06
+22,i6qRnhHw,Migraine,*,S1XgFSUc,4,1,8315.39
+23,4eusxalj,Diabetes,2023-10-22,q4s7PA3N,3,4,14333.94
+24,veLxMPME,Migraine,*,S1XgFSUc,2,3,10963.27
+25,FW1eDBLX,Diabetes,*,DRH9Ziht,5,1,37423.98
+26,19pOrRFk,Diabetes,*,smBTvHQ9,5,4,25192.23
+27,GGsnCK5o,Asthma,2024-10-26,smBTvHQ9,5,1,42581.99
+28,FjmNpjuW,Hypertension,*,DRH9Ziht,1,2,20248.40
+29,1gMawMCg,Heart Disease,*,DRH9Ziht,5,1,31007.14
+30,hRaUwO2m,Fracture,*,DRH9Ziht,5,5,15886.86
+31,5qi5wTDy,Cancer,*,S1XgFSUc,3,2,13354.16
+32,krA3U65d,Asthma,*,uduix7az,4,3,46458.01
+33,SysKYW48,Hypertension,*,smBTvHQ9,4,5,49922.88
+34,KL63oub3,Hypertension,*,smBTvHQ9,5,2,25343.65
+35,oStPlR5B,Asthma,*,uduix7az,1,2,18539.40
+36,nBKWxsLC,Asthma,*,q4s7PA3N,5,3,30622.72
+37,N8uzcqtN,Diabetes,2023-11-18,DRH9Ziht,3,1,46952.61
+38,loSwPooy,Asthma,*,uduix7az,1,1,37146.59
+39,bOXObPIj,Asthma,*,uduix7az,3,5,10610.42
+40,PiaWspxe,Covid-19,*,S1XgFSUc,3,5,24477.74
+41,wFiLGy3f,Diabetes,*,smBTvHQ9,4,3,2299.93
+42,fhfkT7qX,Covid-19,2023-10-04,S1XgFSUc,3,2,37087.42
+43,nFNmHKOq,Fracture,*,DRH9Ziht,1,1,3854.67
+44,XECkK61Y,Asthma,*,DRH9Ziht,1,3,29167.23
+45,08xo0rUO,Asthma,*,q4s7PA3N,2,1,15482.09
+46,04V06H9e,Diabetes,*,uduix7az,2,2,33379.98
+47,u11ijixr,Covid-19,*,DRH9Ziht,4,5,37498.93
+48,3YeNO8Dg,Heart Disease,*,S1XgFSUc,2,4,1336.84
+49,3npUhsKV,Covid-19,*,q4s7PA3N,2,3,8043.97
+50,z5wm8cKj,Hypertension,*,q4s7PA3N,1,4,11199.44
+51,H3r4xCu5,Migraine,*,uduix7az,3,2,11223.89
+52,BTSvYZ0s,Heart Disease,*,q4s7PA3N,3,3,43231.21
+53,42stc1jr,Cancer,*,uduix7az,5,4,34007.95
+54,8PmkrmdC,Covid-19,2023-10-04,smBTvHQ9,1,3,9010.53
+55,RhhIKuMF,Cancer,*,smBTvHQ9,1,5,21784.73
+56,tLc6VxE1,Covid-19,*,q4s7PA3N,5,5,5870.72
+57,9n1s3JZ0,Heart Disease,*,uduix7az,1,4,184.39
+58,DczvbIIr,Heart Disease,*,uduix7az,4,1,47448.84
+59,8mXD6uRW,Covid-19,*,DRH9Ziht,3,1,36015.74
+60,2VKW6Ibe,Cancer,*,DRH9Ziht,3,4,16376.53
+61,fB1XNxPY,Cancer,*,DRH9Ziht,2,2,21080.27
+62,h3pwp85j,Fracture,*,S1XgFSUc,5,5,15117.40
+63,d3L6L5yW,Diabetes,*,uduix7az,3,2,21551.42
+64,N71pGr03,Covid-19,*,q4s7PA3N,4,4,33813.80
+65,7x2Ck2yR,Migraine,*,S1XgFSUc,1,3,25821.06
+66,C449MNkI,Covid-19,*,smBTvHQ9,2,3,11309.57
+67,9RXhZkPK,Heart Disease,*,S1XgFSUc,1,1,12317.64
+68,XwvNia3x,Migraine,2024-01-02,DRH9Ziht,1,4,20780.61
+69,UuNm5SZf,Heart Disease,2023-11-18,q4s7PA3N,4,4,12274.82
+70,K4FTwNU0,Diabetes,*,smBTvHQ9,4,2,8876.75
