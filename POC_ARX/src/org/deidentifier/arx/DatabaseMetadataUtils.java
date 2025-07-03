@@ -3,10 +3,10 @@ package org.deidentifier.arx;
 import java.sql.*;
 import java.util.*;
 
-//métodos para identificação automática de pk e fk
+// automated methods for detecting primary and foreign keys
 public class DatabaseMetadataUtils {
 
-    public static Set<String> getAllTableNames(Connection conn) throws SQLException {
+    private static Set<String> getAllTableNames(Connection conn) throws SQLException {
         Set<String> tableNames = new HashSet<>();
         DatabaseMetaData meta = conn.getMetaData();
         ResultSet rs = meta.getTables(null, conn.getCatalog(), "%", new String[]{"TABLE"});
@@ -61,25 +61,6 @@ public class DatabaseMetadataUtils {
         public String toString() {
             return "PKs: " + primaryKeys + ", FKs: " + foreignKeys;
         }
-    }
-
-    public static Map<String, Set<String>> getColumnOccurrences(Connection conn) throws SQLException {
-        Map<String, Set<String>> colunaParaTabelas = new HashMap<>();
-        String query = "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, conn.getCatalog());
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                String tabela = rs.getString("TABLE_NAME").toLowerCase();
-                String coluna = rs.getString("COLUMN_NAME").toLowerCase();
-
-                colunaParaTabelas.computeIfAbsent(coluna, k -> new HashSet<>()).add(tabela);
-            }
-        }
-
-        return colunaParaTabelas;
     }
 
 }

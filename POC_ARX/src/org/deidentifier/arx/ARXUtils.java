@@ -6,6 +6,7 @@ import org.deidentifier.arx.criteria.DistinctLDiversity;
 import org.deidentifier.arx.criteria.KAnonymity;
 import org.deidentifier.arx.risk.RiskModelSampleRisks;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -188,7 +189,7 @@ public class ARXUtils {
         return diagnosisData;
     }*/
 
-    public static void aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception{
+    public static Map<String, AttributeType> aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception {
         Map<String, AttributeType> classificacao = PresidioPIIClassifier.classificarTabela(nomeTabela);
         DataDefinition def = data.getDefinition();
 
@@ -197,6 +198,8 @@ public class ARXUtils {
             def.setAttributeType(entry.getKey(), entry.getValue());
             System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
         }
+
+        return classificacao;
     }
 
     public static ARXConfiguration criarConfiguracaoGenerica() {
@@ -225,15 +228,20 @@ public class ARXUtils {
         );
     }
 
-    public static void exportarParaBaseDeDados(DataHandle handle, String sql, Connection conn) throws SQLException {
+    public static int exportarParaBaseDeDados(DataHandle handle, String sql, Connection conn) throws SQLException {
+        int insertedLines = 0;
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int row = 0; row < handle.getNumRows(); row++) {
                 for (int col = 0; col < handle.getNumColumns(); col++) {
                     stmt.setString(col + 1, handle.getValue(row, col));
                 }
                 stmt.executeUpdate();
+                insertedLines++;
             }
         }
+
+        return insertedLines;
     }
 
     public static void imprimirMetricas(String nomeTabela, DataHandle handle, ARXResult result) {
@@ -262,4 +270,16 @@ public class ARXUtils {
         System.out.println("→ Registos com risco máximo: " + risks.getNumRecordsAffectedByHighestRisk());
         System.out.println("→ Registos com risco mínimo: " + risks.getNumRecordsAffectedByLowestRisk());
     }
+
+    public static List<String> extrairColuna(DataHandle handle, String nomeColuna) {
+        List<String> valores = new ArrayList<>();
+        int index = handle.getColumnIndexOf(nomeColuna);
+        for (int i = 0; i < handle.getNumRows(); i++) {
+            valores.add(handle.getValue(i, index));
+        }
+        return valores;
+    }
+
 }
+
+
