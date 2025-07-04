@@ -2,24 +2,19 @@ package org.deidentifier.arx;
 
 import java.sql.*;
 import java.util.*;
-import org.deidentifier.arx.criteria.KAnonymity;
-import org.deidentifier.arx.criteria.DistinctLDiversity;
 import org.deidentifier.arx.AttributeType.Hierarchy;
 import org.deidentifier.arx.aggregates.HierarchyBuilderRedactionBased;
 import org.deidentifier.arx.aggregates.HierarchyBuilderRedactionBased.Order;
 
 
-
 public class Main {
 
-    // 1º passo- pseudoanonimizar chaves primárias e estrangeiras identificadoras (como cédula médica e NIF) para manter coerência relacional
+    // Step 1 – Pseudonymize identifying primary and foreign keys to maintain referential integrity
     public static void main(String[] args) {
         try {
             Connection conn = ARXUtils.connectToDatabase("jdbc:mysql://127.0.0.1:3306/poc_arx", "root", "");
 
-            Map<String, Set<String>> colunaParaTabelas = DatabaseMetadataUtils.getColumnOccurrences(conn);
-
-            //inicializa o mapeamento para que as pk pseudoanonimizadas sejam transpostas para as fk na tabela de diagnóstico
+            // initialize the mapping so that the pseudonymized primary keys are propagated to the foreign keys in the diagnosis table
             Map<String, Pseudonymizer> pseudonymizerGlobal = new HashMap<>();
             Map<String, DatabaseMetadataUtils.TableKeys> metadata = DatabaseMetadataUtils.getDatabaseKeys(conn);
             Map<String, Map<String, Pseudonymizer>> pseudonymizersPorTabela = new HashMap<>();
@@ -28,22 +23,12 @@ public class Main {
                 String tabela = entry.getKey();
                 DatabaseMetadataUtils.TableKeys keys = entry.getValue();
 
-                //ignora a chave primária da tabela hospitais, pois não contêm info relevante
+                // ignores the primary key of the hospitals table, as it does not contain relevant information
                 if (tabela.equalsIgnoreCase("hospitals")) continue;
 
                 Set<String> colunasParaPseudonimizar = new HashSet<>(keys.primaryKeys);
                 if (tabela.equalsIgnoreCase("diagnosis")) colunasParaPseudonimizar.remove("diagnosis");
                 colunasParaPseudonimizar.addAll(keys.foreignKeys.keySet());
-
-                // verifica FKs implícitas (colunas partilhadas entre várias tabelas)
-                for (Map.Entry<String, Set<String>> entryColuna : colunaParaTabelas.entrySet()) {
-                    String coluna = entryColuna.getKey();
-                    Set<String> tabelas = entryColuna.getValue();
-
-                    if (tabelas.contains(tabela) && tabelas.size() > 1) {
-                        colunasParaPseudonimizar.add(coluna);
-                    }
-                }
 
                 Map<String, Pseudonymizer> mapa = new HashMap<>();
                 for (String coluna : colunasParaPseudonimizar) {
@@ -76,7 +61,7 @@ public class Main {
                 hospitalData.add(id, name);
                 hospitalNames.add(name);
             }
-
+            // step 2 - presidio classification
             ARXUtils.aplicarClassificacaoPresidio("patients", patientData);
             ARXUtils.aplicarClassificacaoPresidio("doctors", doctorsData);
             ARXUtils.aplicarClassificacaoPresidio("diagnosis", diagnosisData);
@@ -104,13 +89,8 @@ public class Main {
             String[] blood_type = bloodtypeList.toArray(new String[0]);
 
 
-            ARXConfiguration config = ARXConfiguration.create();
-            ARXConfiguration configPatient = ARXConfiguration.create();
-            config.addPrivacyModel(new KAnonymity(2));
-            configPatient.addPrivacyModel(new DistinctLDiversity("race", 3));
-            configPatient.addPrivacyModel(new DistinctLDiversity("blood_type", 3));
-            configPatient.setSuppressionLimit(1d);
-            config.setSuppressionLimit(1d);
+            ARXConfiguration config = ARXUtils.criarConfiguracaoGenerica();
+            ARXConfiguration configPatient = ARXUtils.criarConfiguracaoPacientes();
 
             DataDefinition def = patientData.getDefinition();
             def.setHierarchy("birth_date", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
@@ -120,7 +100,7 @@ public class Main {
 
             // --------------------------------------------------------------------------------------
 
-            // 3º passo - definição das hierarquias de generalização dos campos sensíveis e quase-identificadores (personalizadas ou pré-configuradas)
+            // step 3 – define generalization hierarchies for sensitive fields and quasi-identifiers (custom or preconfigured)
             definition.setHierarchy("birth_date", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
 
             // --------------------------------------------------------------------------------------
@@ -129,7 +109,7 @@ public class Main {
 
             // --------------------------------------------------------------------------------------
 
-            // importação dos métodos de contrução de hierarquias personalizadas para raça, género e tipo de sangue
+            // import custom hierarchy construction methods for race, gender, and blood type.
             CustomRaceHierarchyBuilder builderRace = new CustomRaceHierarchyBuilder();
             System.out.println("RACE VALUES LENGTH: " + race.length);
             System.out.println("RACE VALUES: " + Arrays.toString(race));

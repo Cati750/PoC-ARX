@@ -1,13 +1,13 @@
 package org.deidentifier.arx;
 import org.deidentifier.arx.aggregates.HierarchyBuilderGroupingBased;
 
-//para atributos sensíveis e quase-identificadores construo hierarquias personalizadas para importação na Main
+// for sensitive attributes and quasi-identifiers, I build custom hierarchies for import into the Main module
 public class CustomBloodTypeHierarchyBuilder extends HierarchyBuilderGroupingBased<String> {
 
     // hierarquia de generalização personalizada para o tipo de sangue
     public CustomBloodTypeHierarchyBuilder() {
 
-        super(Type.ORDER_BASED, DataType.STRING); // defino o tipo de hirarquia, mas defino manualmente como os valores se ordenam (para o ARX não criar uma ordem automática)
+        super(Type.ORDER_BASED, DataType.STRING); // the hierarchy type is defined explicitly, with manual value ordering to prevent ARX from applying automatic sorting
     }
 
     @Override
@@ -17,7 +17,7 @@ public class CustomBloodTypeHierarchyBuilder extends HierarchyBuilderGroupingBas
 
         for (int i = 0; i < values.length; i++) {
             String value = values[i];
-            // nível 0 - agrupamento por tipo principal
+            // Level 0 – aggregation based on primary type
             if (value.startsWith("A") && !value.startsWith("AB")) {
                 result[0][i] = new SimpleGroup("A");
             } else if (value.startsWith("B") && !value.startsWith("AB")) {
@@ -30,15 +30,15 @@ public class CustomBloodTypeHierarchyBuilder extends HierarchyBuilderGroupingBas
                 result[0][i] = new SimpleGroup("Other");
             }
 
-            // nível 1 - totalmente generalizado
+            // level 1 – Fully generalized
             result[1][i] = new SimpleGroup("*");
         }
 
         return result;
     }
-    // serve apenas para dar um nome a um grupo de generalização (como A, B e *)
-    public static class SimpleGroup extends AbstractGroup {
-        public SimpleGroup(String label) {
+    // its purpose is solely to label a generalization group (e.g., A, B, and *)
+    private static class SimpleGroup extends AbstractGroup {
+        private SimpleGroup(String label) {
             super(label);
         }
     }

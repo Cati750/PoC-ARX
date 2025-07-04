@@ -12,17 +12,17 @@ public class CustomGenderHierarchyBuilder extends HierarchyBuilderGroupingBased<
         String[] values = getData();
         AbstractGroup[][] result = new AbstractGroup[2][values.length];
         for (int i = 0; i < values.length; i++) {
-            // nível 0 - Generalizar tudo como "Person"
+            // level 0 – generalize everything as "Person"
             result[0][i] = new SimpleGroup("Person");
 
-            // nível 1 - Generalização completa "*"
+            // level 1 – complete generalization represented by "*"
             result[1][i] = new SimpleGroup("*");
         }
 
         return result;
     }
-    public static class SimpleGroup extends AbstractGroup {
-        public SimpleGroup(String label) {
+    private static class SimpleGroup extends AbstractGroup {
+        private SimpleGroup(String label) {
             super(label);
         }
     }
