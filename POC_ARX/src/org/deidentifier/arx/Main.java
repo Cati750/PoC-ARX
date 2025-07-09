@@ -43,25 +43,74 @@ public class Main {
 
             List<String> hospitalNames = new ArrayList<>();
 
-            Data.DefaultData patientData = ARXUtils.loadTable(conn, "patients");
-            Data.DefaultData doctorsData = ARXUtils.loadTable(conn, "doctors");
-            Data.DefaultData diagnosisData = ARXUtils.loadTable(conn, "diagnosis");
+            // CLASSIFICAR E CARREGAR PATIENTS
+            Map<String, AttributeType> tiposPatients = PresidioPIIClassifier.classificarTabela("patients");
 
+            System.out.println("\nClassificação Presidio → Tabela: patients");
+            for (Map.Entry<String, AttributeType> entry : tiposPatients.entrySet()) {
+                System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
+            }
+
+            Data.DefaultData patientData = ARXUtils.loadTable(conn, "patients");
+            DataDefinition defPatients = patientData.getDefinition();
+            for (Map.Entry<String, AttributeType> entry : tiposPatients.entrySet()) {
+                defPatients.setAttributeType(entry.getKey(), entry.getValue());
+            }
+
+            // CLASSIFICAR E CARREGAR DOCTORS
+            Map<String, AttributeType> tiposDoctors = PresidioPIIClassifier.classificarTabela("doctors");
+
+            System.out.println("\nClassificação Presidio → Tabela: doctors");
+            for (Map.Entry<String, AttributeType> entry : tiposDoctors.entrySet()) {
+                System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
+            }
+
+            Data.DefaultData doctorsData = ARXUtils.loadTable(conn, "doctors");
+            DataDefinition defDoctors = doctorsData.getDefinition();
+            for (Map.Entry<String, AttributeType> entry : tiposDoctors.entrySet()) {
+                defDoctors.setAttributeType(entry.getKey(), entry.getValue());
+            }
+
+            // CLASSIFICAR E CARREGAR DIAGNOSIS
+            Map<String, AttributeType> tiposDiagnosis = PresidioPIIClassifier.classificarTabela("diagnosis");
+
+            System.out.println("\nClassificação Presidio → Tabela: diagnosis");
+            for (Map.Entry<String, AttributeType> entry : tiposDiagnosis.entrySet()) {
+                System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
+            }
+
+            Data.DefaultData diagnosisData = ARXUtils.loadTable(conn, "diagnosis");
+            DataDefinition defDiagnosis = diagnosisData.getDefinition();
+            for (Map.Entry<String, AttributeType> entry : tiposDiagnosis.entrySet()) {
+                defDiagnosis.setAttributeType(entry.getKey(), entry.getValue());
+            }
+
+            // CARREGAR MANUALMENTE HOSPITALS + CLASSIFICAR
             PreparedStatement stmt = conn.prepareStatement("SELECT hospital_id, name FROM Hospitals");
             ResultSet rs = stmt.executeQuery();
             Data.DefaultData hospitalData = Data.create();
             hospitalData.add("hospital_id", "name");
+
+
             while (rs.next()) {
                 String id = rs.getString("hospital_id");
                 String name = rs.getString("name");
                 hospitalData.add(id, name);
                 hospitalNames.add(name);
             }
-            // step 2 - presidio classification
-            ARXUtils.aplicarClassificacaoPresidio("patients", patientData);
-            ARXUtils.aplicarClassificacaoPresidio("doctors", doctorsData);
-            ARXUtils.aplicarClassificacaoPresidio("diagnosis", diagnosisData);
-            ARXUtils.aplicarClassificacaoPresidio("hospitals", hospitalData);
+
+            Map<String, AttributeType> tiposHospitals = PresidioPIIClassifier.classificarTabela("hospitals");
+
+            System.out.println("\nClassificação Presidio → Tabela: hospitals");
+            for (Map.Entry<String, AttributeType> entry : tiposHospitals.entrySet()) {
+                System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
+            }
+
+            DataDefinition defHospitals = hospitalData.getDefinition();
+            for (Map.Entry<String, AttributeType> entry : tiposHospitals.entrySet()) {
+                defHospitals.setAttributeType(entry.getKey(), entry.getValue());
+            }
+
 
             patientData = ARXUtils.applyPseudonymization(patientData, metadata.get("patients"), pseudonymizersPorTabela.get("patients"));
             doctorsData = ARXUtils.applyPseudonymization(doctorsData, metadata.get("doctors"), pseudonymizersPorTabela.get("doctors"));

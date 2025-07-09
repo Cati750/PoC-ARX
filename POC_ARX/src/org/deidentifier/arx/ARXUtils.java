@@ -132,7 +132,7 @@ public class ARXUtils {
         return newData;
     }
 
-    public static Map<String, AttributeType> aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception {
+    /*public static Map<String, AttributeType> aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception {
         Map<String, AttributeType> classificacao = PresidioPIIClassifier.classificarTabela(nomeTabela);
         DataDefinition def = data.getDefinition();
 
@@ -143,7 +143,7 @@ public class ARXUtils {
         }
 
         return classificacao;
-    }
+    }*/
 
     public static ARXConfiguration criarConfiguracaoGenerica() {
         ARXConfiguration config = ARXConfiguration.create();

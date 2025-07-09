@@ -10,7 +10,7 @@ import org.json.*;
 public class PresidioPIIClassifier {
 
     private static String getSample(Connection conn, String tabela, String coluna) throws SQLException {
-        String query = "SELECT " + coluna + " FROM " + tabela + " WHERE " + coluna + " IS NOT NULL LIMIT 1";
+        String query = "SELECT " + coluna + " FROM " + tabela + " WHERE " + coluna + " IS NOT NULL LIMIT 10";
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             if (rs.next()) {
                 return rs.getString(1);
