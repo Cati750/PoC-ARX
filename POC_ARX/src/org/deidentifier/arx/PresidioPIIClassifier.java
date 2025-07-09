@@ -44,7 +44,7 @@ public class PresidioPIIClassifier {
         return new JSONArray(resposta.toString());
     }
 
-    public static Map<String, AttributeType> classificarTabela(String tabela) throws Exception {
+    public static Map<String, AttributeType> classifyTable(String tabela) throws Exception {
         Map<String, AttributeType> mapaTipos = new HashMap<>();
 
         String db = "poc_arx"; // database connection
