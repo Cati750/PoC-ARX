@@ -41,15 +41,11 @@ public class Main {
                 if (!mapa.isEmpty()) pseudonymizersPorTabela.put(tabela, mapa);
             }
 
-            List<String> sensiveis = Arrays.asList("race", "gender", "blood_type");
             List<String> hospitalNames = new ArrayList<>();
 
-            Data.DefaultData patientData = ARXUtils.loadAndMaybePseudonymizeTable(
-                    conn, "patients", metadata.get("patients"), pseudonymizersPorTabela.get("patients"), sensiveis);
-            Data.DefaultData doctorsData = ARXUtils.loadAndMaybePseudonymizeTable(
-                    conn, "doctors", metadata.get("doctors"), pseudonymizersPorTabela.get("doctors"), null);
-            Data.DefaultData diagnosisData = ARXUtils.loadAndMaybePseudonymizeTable(
-                    conn, "diagnosis", metadata.get("diagnosis"), pseudonymizersPorTabela.get("diagnosis"), null);
+            Data.DefaultData patientData = ARXUtils.loadTable(conn, "patients");
+            Data.DefaultData doctorsData = ARXUtils.loadTable(conn, "doctors");
+            Data.DefaultData diagnosisData = ARXUtils.loadTable(conn, "diagnosis");
 
             PreparedStatement stmt = conn.prepareStatement("SELECT hospital_id, name FROM Hospitals");
             ResultSet rs = stmt.executeQuery();
@@ -66,6 +62,10 @@ public class Main {
             ARXUtils.aplicarClassificacaoPresidio("doctors", doctorsData);
             ARXUtils.aplicarClassificacaoPresidio("diagnosis", diagnosisData);
             ARXUtils.aplicarClassificacaoPresidio("hospitals", hospitalData);
+
+            patientData = ARXUtils.applyPseudonymization(patientData, metadata.get("patients"), pseudonymizersPorTabela.get("patients"));
+            doctorsData = ARXUtils.applyPseudonymization(doctorsData, metadata.get("doctors"), pseudonymizersPorTabela.get("doctors"));
+            diagnosisData = ARXUtils.applyPseudonymization(diagnosisData, metadata.get("diagnosis"), pseudonymizersPorTabela.get("diagnosis"));
 
 
             List<String> raceList = new ArrayList<>();
