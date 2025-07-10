@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ARXUtils {
+
     public static Connection connectToDatabase(String url, String user, String pass) throws SQLException {
         return DriverManager.getConnection(url, user, pass);
     }
@@ -132,27 +133,15 @@ public class ARXUtils {
         return newData;
     }
 
-    /*public static Map<String, AttributeType> aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception {
-        Map<String, AttributeType> classificacao = PresidioPIIClassifier.classificarTabela(nomeTabela);
-        DataDefinition def = data.getDefinition();
 
-        System.out.println("Tabela " + nomeTabela);
-        for (Map.Entry<String, AttributeType> entry : classificacao.entrySet()) {
-            def.setAttributeType(entry.getKey(), entry.getValue());
-            System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
-        }
-
-        return classificacao;
-    }*/
-
-    public static ARXConfiguration criarConfiguracaoGenerica() {
+    public static ARXConfiguration GenericConfiguration() {
         ARXConfiguration config = ARXConfiguration.create();
         config.addPrivacyModel(new KAnonymity(2));
         config.setSuppressionLimit(1d);
         return config;
     }
 
-    public static ARXConfiguration criarConfiguracaoPacientes() {
+    public static ARXConfiguration PatientConfiguration() {
         ARXConfiguration config = ARXConfiguration.create();
         config.addPrivacyModel(new DistinctLDiversity("race", 3));
         config.addPrivacyModel(new DistinctLDiversity("blood_type", 3));
@@ -160,8 +149,8 @@ public class ARXUtils {
         return config;
     }
 
-    public static HierarchyBuilderDate criarHierarquiaDatas(String formato) {
-        DataType<Date> customDateType = DataType.createDate(formato);
+    public static HierarchyBuilderDate DateHierarchy(String format) {
+        DataType<Date> customDateType = DataType.createDate(format);
         return HierarchyBuilderDate.create(
                 customDateType,
                 HierarchyBuilderDate.Granularity.DAY_MONTH_YEAR,
@@ -171,7 +160,7 @@ public class ARXUtils {
         );
     }
 
-    public static int exportarParaBaseDeDados(DataHandle handle, String sql, Connection conn) throws SQLException {
+    public static int exportToDatabase(DataHandle handle, String sql, Connection conn) throws SQLException {
         int insertedLines = 0;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -187,40 +176,31 @@ public class ARXUtils {
         return insertedLines;
     }
 
-    public static void imprimirMetricas(String nomeTabela, DataHandle handle, ARXResult result) {
-        System.out.println("\nMétricas de anonimização para Tabela " + nomeTabela + ":");
+    public static void Metrics(String TableName, DataHandle handle, ARXResult result) {
+        System.out.println("\nAnonymization metrics for table " + TableName + ":");
 
         Map<String, StatisticsSummary<?>> statsMap = handle.getStatistics().getSummaryStatistics(true);
         for (Map.Entry<String, StatisticsSummary<?>> entry : statsMap.entrySet()) {
-            System.out.println("→ Atributo: " + entry.getKey());
-            System.out.println("   - Nº distintos: " + entry.getValue().getNumberOfDistinctValuesAsString());
-            if (entry.getValue().isModeAvailable()) System.out.println("   - Moda: " + entry.getValue().getModeAsString());
-            if (entry.getValue().isMinAvailable()) System.out.println("   - Mínimo: " + entry.getValue().getMinAsString());
-            if (entry.getValue().isMaxAvailable()) System.out.println("   - Máximo: " + entry.getValue().getMaxAsString());
-            if (entry.getValue().isMedianAvailable()) System.out.println("   - Mediana: " + entry.getValue().getMedianAsString());
+            System.out.println("→ Attribute: " + entry.getKey());
+            System.out.println("   - Number of distinct values: " + entry.getValue().getNumberOfDistinctValuesAsString());
+            if (entry.getValue().isModeAvailable()) System.out.println("   - Mode: " + entry.getValue().getModeAsString());
+            if (entry.getValue().isMinAvailable()) System.out.println("   - Minimum: " + entry.getValue().getMinAsString());
+            if (entry.getValue().isMaxAvailable()) System.out.println("   - Maximum: " + entry.getValue().getMaxAsString());
+            if (entry.getValue().isMedianAvailable()) System.out.println("   - Median: " + entry.getValue().getMedianAsString());
         }
 
         ARXLattice.ARXNode node = result.getGlobalOptimum();
         for (String attr : handle.getDefinition().getQuasiIdentifyingAttributes()) {
             int level = node.getGeneralization(attr);
-            System.out.println("→ Atributo: " + attr + " → Nível de generalização: " + level);
+            System.out.println("→ Attribute: " + attr + " → Generalization Level: " + level);
         }
 
         RiskModelSampleRisks risks = handle.getRiskEstimator().getSampleBasedReidentificationRisk();
-        System.out.println("→ Risco máximo: " + risks.getHighestRisk());
-        System.out.println("→ Risco médio: " + risks.getAverageRisk());
-        System.out.println("→ Risco mínimo: " + risks.getLowestRisk());
-        System.out.println("→ Registos com risco máximo: " + risks.getNumRecordsAffectedByHighestRisk());
-        System.out.println("→ Registos com risco mínimo: " + risks.getNumRecordsAffectedByLowestRisk());
-    }
-
-    public static List<String> extrairColuna(DataHandle handle, String nomeColuna) {
-        List<String> valores = new ArrayList<>();
-        int index = handle.getColumnIndexOf(nomeColuna);
-        for (int i = 0; i < handle.getNumRows(); i++) {
-            valores.add(handle.getValue(i, index));
-        }
-        return valores;
+        System.out.println("→ Maximum risk: " + risks.getHighestRisk());
+        System.out.println("→ Average risk: " + risks.getAverageRisk());
+        System.out.println("→ Minimum Risk: " + risks.getLowestRisk());
+        System.out.println("→ Records with maximum risk: " + risks.getNumRecordsAffectedByHighestRisk());
+        System.out.println("→ Records with minimum risk: " + risks.getNumRecordsAffectedByLowestRisk());
     }
 
 }

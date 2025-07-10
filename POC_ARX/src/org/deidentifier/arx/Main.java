@@ -17,28 +17,28 @@ public class Main {
             // initialize the mapping so that the pseudonymized primary keys are propagated to the foreign keys in the diagnosis table
             Map<String, Pseudonymizer> pseudonymizerGlobal = new HashMap<>();
             Map<String, DatabaseMetadataUtils.TableKeys> metadata = DatabaseMetadataUtils.getDatabaseKeys(conn);
-            Map<String, Map<String, Pseudonymizer>> pseudonymizersPorTabela = new HashMap<>();
+            Map<String, Map<String, Pseudonymizer>> pseudonymizersPerTable = new HashMap<>();
 
             for (Map.Entry<String, DatabaseMetadataUtils.TableKeys> entry : metadata.entrySet()) {
-                String tabela = entry.getKey();
+                String table = entry.getKey();
                 DatabaseMetadataUtils.TableKeys keys = entry.getValue();
 
                 // ignores the primary key of the hospitals table, as it does not contain relevant information
-                if (tabela.equalsIgnoreCase("hospitals")) continue;
+                if (table.equalsIgnoreCase("hospitals")) continue;
 
-                Set<String> colunasParaPseudonimizar = new HashSet<>(keys.primaryKeys);
-                if (tabela.equalsIgnoreCase("diagnosis")) colunasParaPseudonimizar.remove("diagnosis");
-                colunasParaPseudonimizar.addAll(keys.foreignKeys.keySet());
+                Set<String> columnsToPseudonymize = new HashSet<>(keys.primaryKeys);
+                if (table.equalsIgnoreCase("diagnosis")) columnsToPseudonymize.remove("diagnosis");
+                columnsToPseudonymize.addAll(keys.foreignKeys.keySet());
 
-                Map<String, Pseudonymizer> mapa = new HashMap<>();
-                for (String coluna : colunasParaPseudonimizar) {
-                    if (coluna.equalsIgnoreCase("hospital_id") || coluna.equalsIgnoreCase("insurance_provider_id")) continue;
+                Map<String, Pseudonymizer> map = new HashMap<>();
+                for (String column : columnsToPseudonymize) {
+                    if (column.equalsIgnoreCase("hospital_id") || column.equalsIgnoreCase("insurance_provider_id")) continue;
 
-                    pseudonymizerGlobal.putIfAbsent(coluna, new Pseudonymizer(8));
-                    mapa.put(coluna, pseudonymizerGlobal.get(coluna));
+                    pseudonymizerGlobal.putIfAbsent(column, new Pseudonymizer(8));
+                    map.put(column, pseudonymizerGlobal.get(column));
                 }
 
-                if (!mapa.isEmpty()) pseudonymizersPorTabela.put(tabela, mapa);
+                if (!map.isEmpty()) pseudonymizersPerTable.put(table, map);
             }
 
 
@@ -92,9 +92,9 @@ public class Main {
             // Retrieve hospital names for hierarchy creation
             List<String> hospitalNames = hospitalNameCollector.getOrDefault("hospitals", new ArrayList<>());
 
-            patientData = ARXUtils.applyPseudonymization(patientData, metadata.get("patients"), pseudonymizersPorTabela.get("patients"));
-            doctorsData = ARXUtils.applyPseudonymization(doctorsData, metadata.get("doctors"), pseudonymizersPorTabela.get("doctors"));
-            diagnosisData = ARXUtils.applyPseudonymization(diagnosisData, metadata.get("diagnosis"), pseudonymizersPorTabela.get("diagnosis"));
+            patientData = ARXUtils.applyPseudonymization(patientData, metadata.get("patients"), pseudonymizersPerTable.get("patients"));
+            doctorsData = ARXUtils.applyPseudonymization(doctorsData, metadata.get("doctors"), pseudonymizersPerTable.get("doctors"));
+            diagnosisData = ARXUtils.applyPseudonymization(diagnosisData, metadata.get("diagnosis"), pseudonymizersPerTable.get("diagnosis"));
 
 
             List<String> raceList = new ArrayList<>();
@@ -118,23 +118,23 @@ public class Main {
             String[] blood_type = bloodtypeList.toArray(new String[0]);
 
 
-            ARXConfiguration config = ARXUtils.criarConfiguracaoGenerica();
-            ARXConfiguration configPatient = ARXUtils.criarConfiguracaoPacientes();
+            ARXConfiguration config = ARXUtils.GenericConfiguration();
+            ARXConfiguration configPatient = ARXUtils.PatientConfiguration();
 
             DataDefinition def = patientData.getDefinition();
-            def.setHierarchy("birth_date", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
-            def.setHierarchy("date_of_admission", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
+            def.setHierarchy("birth_date", ARXUtils.DateHierarchy("yyyy-MM-dd"));
+            def.setHierarchy("date_of_admission", ARXUtils.DateHierarchy("yyyy-MM-dd"));
 
             DataDefinition definition = patientData.getDefinition();
 
             // --------------------------------------------------------------------------------------
 
             // step 3 – define generalization hierarchies for sensitive fields and quasi-identifiers (custom or preconfigured)
-            definition.setHierarchy("birth_date", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
+            definition.setHierarchy("birth_date", ARXUtils.DateHierarchy("yyyy-MM-dd"));
 
             // --------------------------------------------------------------------------------------
 
-            definition.setHierarchy("date_of_admission", ARXUtils.criarHierarquiaDatas("yyyy-MM-dd"));
+            definition.setHierarchy("date_of_admission", ARXUtils.DateHierarchy("yyyy-MM-dd"));
 
             // --------------------------------------------------------------------------------------
 
@@ -173,19 +173,19 @@ public class Main {
             Connection connTarget = DriverManager.getConnection("jdbc:mysql://localhost:3306/poc_arx", "root", "");
 
             String sqlPatients = "INSERT INTO anonymized_patients (patient_NIF, name, birth_date, race, gender, blood_type, contact_info) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            ARXUtils.exportarParaBaseDeDados(resultsPacients.getOutput(), sqlPatients, connTarget);
-            ARXUtils.imprimirMetricas("Patients", resultsPacients.getOutput(), resultsPacients);
+            ARXUtils.exportToDatabase(resultsPacients.getOutput(), sqlPatients, connTarget);
+            ARXUtils.Metrics("Patients", resultsPacients.getOutput(), resultsPacients);
 
             String sqlDoctor = "INSERT INTO pseudoanonymized_doctors (cedula_medica, name) VALUES (?, ?)";
-            ARXUtils.exportarParaBaseDeDados(doctorsData.getHandle(), sqlDoctor, connTarget);
+            ARXUtils.exportToDatabase(doctorsData.getHandle(), sqlDoctor, connTarget);
 
             String sqlHospital = "INSERT INTO anonymized_hospital (hospital_id, name) VALUES (?, ?)";
-            ARXUtils.exportarParaBaseDeDados(resultsHospital.getOutput(), sqlHospital, connTarget);
-            ARXUtils.imprimirMetricas("Hospital", resultsHospital.getOutput(), resultsHospital);
+            ARXUtils.exportToDatabase(resultsHospital.getOutput(), sqlHospital, connTarget);
+            ARXUtils.Metrics("Hospital", resultsHospital.getOutput(), resultsHospital);
 
             String sqlDiagnosis = "INSERT INTO anonymized_diagnosis (diagnosis, patient_NIF, medical_condition, date_of_admission, cedula_medica, hospital_id, insurance_provider_id, billing_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            ARXUtils.exportarParaBaseDeDados(resultsDiagnosis.getOutput(), sqlDiagnosis, connTarget);
-            ARXUtils.imprimirMetricas("Diagnosis", resultsDiagnosis.getOutput(), resultsDiagnosis);
+            ARXUtils.exportToDatabase(resultsDiagnosis.getOutput(), sqlDiagnosis, connTarget);
+            ARXUtils.Metrics("Diagnosis", resultsDiagnosis.getOutput(), resultsDiagnosis);
 
             conn.close();
         } catch (Exception e) {
