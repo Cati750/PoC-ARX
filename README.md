@@ -28,14 +28,15 @@ This project implements a full pipeline for pseudonymization and anonymization o
 A detailed flowchart is included in the repository to illustrate the full process.
 
 ## Project Structure
-├── ARXUtils.java # Utility class for ARX anonymization and data loading
-├── PresidioPIIClassifier.java # Attribute classification via Presidio Analyzer
-├── Pseudonymizer.java # Consistent pseudonym generation
-├── DatabaseMetadataUtils.java # PK/FK extraction from DB metadata
-├── CustomRaceHierarchyBuilder.java # Custom hierarchy for race
-├── CustomGenderHierarchyBuilder.java # Custom hierarchy for gender
-├── CustomBloodTypeHierarchyBuilder.java# Custom hierarchy for blood type
-├── Main.java # Main orchestrator class
+
+1. **ARXUtils.java # Utility class for ARX anonymization and data loading
+1. **PresidioPIIClassifier.java # Attribute classification via Presidio Analyzer
+1. **Pseudonymizer.java # Consistent pseudonym generation
+1. **DatabaseMetadataUtils.java # PK/FK extraction from DB metadata
+1. **CustomRaceHierarchyBuilder.java # Custom hierarchy for race
+1. **CustomGenderHierarchyBuilder.java # Custom hierarchy for gender
+1. **CustomBloodTypeHierarchyBuilder.java# Custom hierarchy for blood type
+1. **Main.java # Main orchestrator class
 
 
 ## Requirements
@@ -52,8 +53,6 @@ Presidio must be running locally as a REST service. To install and launch:
 
 ```bash
 pip install presidio-analyzer
-uvicorn presidio_analyzer_entry:app --host 127.0.0.1 --port 3000`
-
-##
+uvicorn presidio_analyzer_entry:app --host 127.0.0.1 --port 3000
 
 
