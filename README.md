@@ -53,6 +53,12 @@ Presidio must be running locally as a REST service. To install and launch:
 
 ```bash
 pip install presidio-analyzer
-uvicorn presidio_analyzer_entry:app --host 127.0.0.1 --port 3000
+````
 
+## How to Run
+1. **Start Presidio Analyzer (Python) via Spyder
+2. **Import the Example Database (MySQL)
+3. **Run the Java Pipeline: open Main.java and configure your database connection
 
+⚠️ Important:
+If you want to run the pipeline again, you must manually delete the previously generated tables (anonymized_*, pseudonymized_*) from the database. Otherwise, table creation will fail due to naming conflicts.
