@@ -9,8 +9,8 @@ import org.json.*;
 // using Presidio for automated field classification integrated with ARX
 public class PresidioPIIClassifier {
 
-    private static String getSample(Connection conn, String tabela, String coluna) throws SQLException {
-        String query = "SELECT " + coluna + " FROM " + tabela + " WHERE " + coluna + " IS NOT NULL LIMIT 1";
+    private static String getSample(Connection conn, String table, String column) throws SQLException {
+        String query = "SELECT " + column + " FROM " + table + " WHERE " + column + " IS NOT NULL LIMIT 10";
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             if (rs.next()) {
                 return rs.getString(1);
@@ -19,7 +19,7 @@ public class PresidioPIIClassifier {
         return null; // query to retrieve a non-null sample value from a specific column for Presidio classification purposes
     }
 
-    private static JSONArray analisarComPresidio(String texto) throws IOException {
+    private static JSONArray analyzeWithPresidio(String text) throws IOException {
         URL url = new URL("http://localhost:3000/analyze"); // sends the text to the Presidio Analyzer API via POST (Presidio is running locally in Python)
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
@@ -27,7 +27,7 @@ public class PresidioPIIClassifier {
         con.setDoOutput(true);
 
         JSONObject payload = new JSONObject();
-        payload.put("text", texto); // receives a JSON response with the detected entities
+        payload.put("text", text); // receives a JSON response with the detected entities
         payload.put("language", "en");
 
         try (OutputStream os = con.getOutputStream()) {
@@ -35,52 +35,51 @@ public class PresidioPIIClassifier {
         }
 
         BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"));
-        StringBuilder resposta = new StringBuilder();
-        String linha;
-        while ((linha = br.readLine()) != null) {
-            resposta.append(linha.trim());
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            response.append(line.trim());
         }
 
-        return new JSONArray(resposta.toString());
+        return new JSONArray(response.toString());
     }
 
-    public static Map<String, AttributeType> classificarTabela(String tabela) throws Exception {
-        Map<String, AttributeType> mapaTipos = new HashMap<>();
+    public static Map<String, AttributeType> classifyTable(String table) throws Exception {
+        Map<String, AttributeType> ColumnTypeMap = new HashMap<>();
 
         String db = "poc_arx"; // database connection
         String user = "root";
         String password = "";
 
         Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + db, user, password);
-        ResultSet rsCols = conn.getMetaData().getColumns(null, null, tabela, null);
+        ResultSet rsCols = conn.getMetaData().getColumns(null, null, table, null);
 
         while (rsCols.next()) {
-            String coluna = rsCols.getString("COLUMN_NAME");
-            String amostra = getSample(conn, tabela, coluna);
-            if (amostra == null || amostra.isEmpty()) continue;
+            String columnIdenfyingType = rsCols.getString("COLUMN_NAME");
+            String sample = getSample(conn, table, columnIdenfyingType);
+            if (sample == null || sample.isEmpty()) continue;
 
-            JSONArray resultado = analisarComPresidio(amostra);
-            Set<String> entidades = new HashSet<>();
-            for (int i = 0; i < resultado.length(); i++) {
-                entidades.add(resultado.getJSONObject(i).getString("entity_type"));
+            JSONArray JSONresults = analyzeWithPresidio(sample);
+            Set<String> entities = new HashSet<>();
+            for (int i = 0; i < JSONresults.length(); i++) {
+                entities.add(JSONresults.getJSONObject(i).getString("entity_type"));
             } // for each column: retrieve a sample using getSample; use analyzeWithPresidio to detect entities; classify based on the detected entities
 
-            AttributeType tipo; // automation of field classification
-            if (entidades.contains("EMAIL_ADDRESS") || entidades.contains("PHONE_NUMBER") || entidades.contains("PERSON")) {
-                tipo = AttributeType.IDENTIFYING_ATTRIBUTE;
-            } else if (entidades.contains("DATE_TIME") || entidades.contains("LOCATION") || entidades.contains("GENDER") || entidades.contains("FACILITY")) { // the entities "gender" and "facility" were both custom-trained by me
-                tipo = AttributeType.QUASI_IDENTIFYING_ATTRIBUTE;
-            } else if (entidades.contains("RACE") || entidades.contains("BLOOD_TYPE")) { // both PII entities were pre-trained to enable Presidio to identify them
-                tipo = AttributeType.SENSITIVE_ATTRIBUTE;
+            AttributeType type; // automation of field classification
+            if (entities.contains("EMAIL_ADDRESS") || entities.contains("PHONE_NUMBER") || entities.contains("PERSON")) {
+                type = AttributeType.IDENTIFYING_ATTRIBUTE;
+            } else if (entities.contains("DATE_TIME") || entities.contains("LOCATION") || entities.contains("GENDER") || entities.contains("FACILITY")) { // the entities "gender" and "facility" were both custom-trained by me
+                type = AttributeType.QUASI_IDENTIFYING_ATTRIBUTE;
+            } else if (entities.contains("RACE") || entities.contains("BLOOD_TYPE")) { // both PII entities were pre-trained to enable Presidio to identify them
+                type = AttributeType.SENSITIVE_ATTRIBUTE;
             } else {
-                tipo = AttributeType.INSENSITIVE_ATTRIBUTE;
+                type = AttributeType.INSENSITIVE_ATTRIBUTE;
             }
 
-            mapaTipos.put(coluna, tipo); //mapaTipos demasiado genérico (mapa=chave_valor)
+            ColumnTypeMap.put(columnIdenfyingType, type);
         }
 
         conn.close();
-        return mapaTipos;
+        return ColumnTypeMap;
     }
-
 }

@@ -12,11 +12,38 @@ import java.util.List;
 import java.util.Map;
 
 public class ARXUtils {
+
     public static Connection connectToDatabase(String url, String user, String pass) throws SQLException {
         return DriverManager.getConnection(url, user, pass);
     }
 
-    public static Data.DefaultData loadAndMaybePseudonymizeTable(
+    public static Data.DefaultData loadTable(Connection conn, String tableName) throws SQLException {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+        ResultSetMetaData meta = rs.getMetaData();
+
+        int columnCount = meta.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = meta.getColumnName(i + 1);
+        }
+
+        Data.DefaultData data = Data.create();
+        data.add(columnNames);
+
+        while (rs.next()) {
+            String[] row = new String[columnCount];
+            for (int i = 0; i < columnCount; i++) {
+                row[i] = rs.getString(i + 1);
+            }
+            data.add(row);
+        }
+
+        return data;
+    }
+
+
+   /* public static Data.DefaultData loadAndMaybePseudonymizeTable(
             Connection conn,
             String tableName,
             DatabaseMetadataUtils.TableKeys keys,
@@ -57,158 +84,63 @@ public class ARXUtils {
         }
 
         return data;
-    }
-
-
-
-    /*public static Data.DefaultData loadAndPseudonymizePatients(
-            Connection conn,
-            Pseudonymizer patientIdMap,
-            List<String> bloodtypeList,
-            List<String> raceList,
-            List<String> genderList
-    ) throws SQLException {
-
-        PreparedStatement stmt = conn.prepareStatement(
-                "SELECT patient_NIF, name, birth_date, race, gender, blood_type, contact_info FROM Patients"
-        );
-        ResultSet rs = stmt.executeQuery();
-
-        Data.DefaultData patientData = Data.create();
-        patientData.add("patient_NIF", "name", "birth_date", "race", "gender", "blood_type", "contact_info");
-
-        while (rs.next()) {
-            String patientId = rs.getString("patient_NIF");
-            String name = rs.getString("name");
-            String birthDate = rs.getString("birth_date");
-            String race = rs.getString("race");
-            String gender = rs.getString("gender");
-            String bloodType = rs.getString("blood_type");
-            String contactInfo = rs.getString("contact_info");
-
-            patientData.add(
-                    patientIdMap.get(patientId),
-                    name, birthDate, race, gender, bloodType, contactInfo
-            );
-
-            bloodtypeList.add(bloodType);
-            raceList.add(race);
-            genderList.add(gender);
-        }
-
-        return patientData;
-    }
-
-    public static Data.DefaultData loadAndPseudonymizeDoctors(
-            Connection conn,
-            Pseudonymizer doctorIdMap
-    ) throws SQLException {
-
-        PreparedStatement stmt = conn.prepareStatement(
-                "SELECT cedula_medica, name FROM Doctors"
-        );
-        ResultSet rs = stmt.executeQuery();
-
-        Data.DefaultData doctorsData = Data.create();
-        doctorsData.add("cedula_medica", "name");
-
-        while (rs.next()) {
-            String doctorId = rs.getString("cedula_medica");
-            String name = rs.getString("name");
-
-            doctorsData.add(
-                    doctorIdMap.get(doctorId),
-                    name
-            );
-        }
-
-        return doctorsData;
-    }
-
-    public static Data.DefaultData loadHospitalData(
-            Connection conn,
-            List<String> hospitalNameList
-    ) throws SQLException {
-
-        PreparedStatement stmt = conn.prepareStatement("SELECT hospital_id, name FROM Hospitals");
-        ResultSet rs = stmt.executeQuery();
-
-        Data.DefaultData hospitalData = Data.create();
-        hospitalData.add("hospital_id", "name");
-
-        while (rs.next()) {
-            String hospitalId = rs.getString("hospital_id");
-            String hospitalName = rs.getString("name");
-
-            hospitalData.add(hospitalId, hospitalName);
-            hospitalNameList.add(hospitalName);
-        }
-
-        return hospitalData;
     }*/
 
+    public static Data.DefaultData applyPseudonymization(
+            Data.DefaultData originalData,
+            DatabaseMetadataUtils.TableKeys keys,
+            Map<String, Pseudonymizer> pseudonymizers) {
 
-    /*public static Data.DefaultData loadAndPseudonymizeDiagnosis(
-            Connection conn,
-            Pseudonymizer pacientIdMap,
-            Pseudonymizer doctorIdMap
-    ) throws SQLException {
+        if (pseudonymizers == null || pseudonymizers.isEmpty()) return originalData;
 
-        PreparedStatement stmt = conn.prepareStatement(
-                "SELECT diagnosis, patient_NIF, medical_condition, date_of_admission, cedula_medica, hospital_id, insurance_provider_id, billing_amount FROM Diagnosis"
-        );
-        ResultSet rs = stmt.executeQuery();
-
-        Data.DefaultData diagnosisData = Data.create();
-        diagnosisData.add("diagnosis", "patient_NIF", "medical_condition", "date_of_admission",
-                "cedula_medica", "hospital_id", "insurance_provider_id", "billing_amount");
-
-        while (rs.next()) {
-            String diagnosisId = rs.getString("diagnosis");
-            String patientNIF = rs.getString("patient_NIF");
-            String medicalCondition = rs.getString("medical_condition");
-            String dateOfAdmission = rs.getString("date_of_admission");
-            String doctorId = rs.getString("cedula_medica");
-            String hospitalId = rs.getString("hospital_id");
-            String providerId = rs.getString("insurance_provider_id");
-            String billing = rs.getString("billing_amount");
-
-            diagnosisData.add(
-                    diagnosisId,
-                    pacientIdMap.get(patientNIF),
-                    medicalCondition,
-                    dateOfAdmission,
-                    doctorIdMap.get(doctorId),
-                    hospitalId,
-                    providerId,
-                    billing
-            );
+        Data.DefaultData newData = Data.create();
+        DataHandle handle = originalData.getHandle();
+        int columnCount = handle.getNumColumns();
+        String[] columnNames = new String[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = handle.getAttributeName(i);
         }
 
-        return diagnosisData;
-    }*/
+        newData.add(columnNames);
 
-    public static Map<String, AttributeType> aplicarClassificacaoPresidio(String nomeTabela, Data.DefaultData data) throws Exception {
-        Map<String, AttributeType> classificacao = PresidioPIIClassifier.classificarTabela(nomeTabela);
-        DataDefinition def = data.getDefinition();
 
-        System.out.println("Tabela " + nomeTabela);
-        for (Map.Entry<String, AttributeType> entry : classificacao.entrySet()) {
-            def.setAttributeType(entry.getKey(), entry.getValue());
-            System.out.println("Coluna: " + entry.getKey() + " → Tipo ARX: " + entry.getValue());
+        for (int i = 0; i < handle.getNumRows(); i++) {
+            String[] row = new String[columnNames.length];
+            for (int j = 0; j < columnNames.length; j++) {
+                String colName = columnNames[j];
+                String originalValue = handle.getValue(i, j);
+
+                boolean isIdentifyingKey = keys.primaryKeys.contains(colName) || keys.foreignKeys.containsKey(colName);
+
+                if (isIdentifyingKey && pseudonymizers.containsKey(colName) && originalValue != null) {
+                    row[j] = pseudonymizers.get(colName).get(originalValue);
+                } else {
+                    row[j] = originalValue;
+                }
+            }
+            newData.add(row);
+        }
+        // copy the original DataDefinition to preserve attribute types (such as SENSITIVE_ATTRIBUTE)
+        DataDefinition originalDef = originalData.getDefinition();
+        DataDefinition newDef = newData.getDefinition();
+
+        for (String attr : columnNames) {
+            AttributeType type = originalDef.getAttributeType(attr);
+            newDef.setAttributeType(attr, type);
         }
 
-        return classificacao;
+        return newData;
     }
 
-    public static ARXConfiguration criarConfiguracaoGenerica() {
+
+    public static ARXConfiguration GenericConfiguration() {
         ARXConfiguration config = ARXConfiguration.create();
         config.addPrivacyModel(new KAnonymity(2));
         config.setSuppressionLimit(1d);
         return config;
     }
 
-    public static ARXConfiguration criarConfiguracaoPacientes() {
+    public static ARXConfiguration PatientConfiguration() {
         ARXConfiguration config = ARXConfiguration.create();
         config.addPrivacyModel(new DistinctLDiversity("race", 3));
         config.addPrivacyModel(new DistinctLDiversity("blood_type", 3));
@@ -216,8 +148,8 @@ public class ARXUtils {
         return config;
     }
 
-    public static HierarchyBuilderDate criarHierarquiaDatas(String formato) {
-        DataType<Date> customDateType = DataType.createDate(formato);
+    public static HierarchyBuilderDate DateHierarchy(String format) {
+        DataType<Date> customDateType = DataType.createDate(format);
         return HierarchyBuilderDate.create(
                 customDateType,
                 HierarchyBuilderDate.Granularity.DAY_MONTH_YEAR,
@@ -227,7 +159,7 @@ public class ARXUtils {
         );
     }
 
-    public static int exportarParaBaseDeDados(DataHandle handle, String sql, Connection conn) throws SQLException {
+    public static int exportToDatabase(DataHandle handle, String sql, Connection conn) throws SQLException {
         int insertedLines = 0;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -243,40 +175,31 @@ public class ARXUtils {
         return insertedLines;
     }
 
-    public static void imprimirMetricas(String nomeTabela, DataHandle handle, ARXResult result) {
-        System.out.println("\nMétricas de anonimização para Tabela " + nomeTabela + ":");
+    public static void Metrics(String TableName, DataHandle handle, ARXResult result) {
+        System.out.println("\nAnonymization metrics for table " + TableName + ":");
 
         Map<String, StatisticsSummary<?>> statsMap = handle.getStatistics().getSummaryStatistics(true);
         for (Map.Entry<String, StatisticsSummary<?>> entry : statsMap.entrySet()) {
-            System.out.println("→ Atributo: " + entry.getKey());
-            System.out.println("   - Nº distintos: " + entry.getValue().getNumberOfDistinctValuesAsString());
-            if (entry.getValue().isModeAvailable()) System.out.println("   - Moda: " + entry.getValue().getModeAsString());
-            if (entry.getValue().isMinAvailable()) System.out.println("   - Mínimo: " + entry.getValue().getMinAsString());
-            if (entry.getValue().isMaxAvailable()) System.out.println("   - Máximo: " + entry.getValue().getMaxAsString());
-            if (entry.getValue().isMedianAvailable()) System.out.println("   - Mediana: " + entry.getValue().getMedianAsString());
+            System.out.println("→ Attribute: " + entry.getKey());
+            System.out.println("   - Number of distinct values: " + entry.getValue().getNumberOfDistinctValuesAsString());
+            if (entry.getValue().isModeAvailable()) System.out.println("   - Mode: " + entry.getValue().getModeAsString());
+            if (entry.getValue().isMinAvailable()) System.out.println("   - Minimum: " + entry.getValue().getMinAsString());
+            if (entry.getValue().isMaxAvailable()) System.out.println("   - Maximum: " + entry.getValue().getMaxAsString());
+            if (entry.getValue().isMedianAvailable()) System.out.println("   - Median: " + entry.getValue().getMedianAsString());
         }
 
         ARXLattice.ARXNode node = result.getGlobalOptimum();
         for (String attr : handle.getDefinition().getQuasiIdentifyingAttributes()) {
             int level = node.getGeneralization(attr);
-            System.out.println("→ Atributo: " + attr + " → Nível de generalização: " + level);
+            System.out.println("→ Attribute: " + attr + " → Generalization Level: " + level);
         }
 
         RiskModelSampleRisks risks = handle.getRiskEstimator().getSampleBasedReidentificationRisk();
-        System.out.println("→ Risco máximo: " + risks.getHighestRisk());
-        System.out.println("→ Risco médio: " + risks.getAverageRisk());
-        System.out.println("→ Risco mínimo: " + risks.getLowestRisk());
-        System.out.println("→ Registos com risco máximo: " + risks.getNumRecordsAffectedByHighestRisk());
-        System.out.println("→ Registos com risco mínimo: " + risks.getNumRecordsAffectedByLowestRisk());
-    }
-
-    public static List<String> extrairColuna(DataHandle handle, String nomeColuna) {
-        List<String> valores = new ArrayList<>();
-        int index = handle.getColumnIndexOf(nomeColuna);
-        for (int i = 0; i < handle.getNumRows(); i++) {
-            valores.add(handle.getValue(i, index));
-        }
-        return valores;
+        System.out.println("→ Maximum risk: " + risks.getHighestRisk());
+        System.out.println("→ Average risk: " + risks.getAverageRisk());
+        System.out.println("→ Minimum Risk: " + risks.getLowestRisk());
+        System.out.println("→ Records with maximum risk: " + risks.getNumRecordsAffectedByHighestRisk());
+        System.out.println("→ Records with minimum risk: " + risks.getNumRecordsAffectedByLowestRisk());
     }
 
 }
